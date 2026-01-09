@@ -1,41 +1,15 @@
 <!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <title>折れ線グラフ プレビュー</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .wrap { width: 360px; }
-    svg { border: 1px solid #ddd; border-radius: 8px; }
-  </style>
-</head>
-<body>
-  <h2>折れ線グラフ（SVG）</h2>
-
-  <div class="wrap">
-    <svg viewBox="0 0 300 200" width="360" height="240">
-      <!-- 軸 -->
-      <line x1="30" y1="10" x2="30" y2="180" stroke="#333" />
-      <line x1="30" y1="180" x2="290" y2="180" stroke="#333" />
-
-      <!-- 折れ線 -->
-      <polyline
-        points="30,160 80,120 130,140 180,60 230,90 280,30"
-        fill="none"
-        stroke="#4a90e2"
-        stroke-width="3"
-      />
-
-      <!-- 点（ホバーで値表示） -->
-      <circle cx="30" cy="160" r="4" fill="#4a90e2"><title>値: 10</title></circle>
-      <circle cx="80" cy="120" r="4" fill="#4a90e2"><title>値: 25</title></circle>
-      <circle cx="130" cy="140" r="4" fill="#4a90e2"><title>値: 20</title></circle>
-      <circle cx="180" cy="60"  r="4" fill="#4a90e2"><title>値: 45</title></circle>
-      <circle cx="230" cy="90"  r="4" fill="#4a90e2"><title>値: 35</title></circle>
-      <circle cx="280" cy="30"  r="4" fill="#4a90e2"><title>値: 55</title></circle>
-    </svg>
-  </div>
-
-  <p>※点にマウスを乗せると値が表示されます。</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Demand Forecast | Next-Gen Ordering</title>
+    <!-- Preconnect for fonts if we were fetching them, but using system-ui/Inter if available locally or via import in CSS -->
+    <meta name="description" content="AI-powered demand forecasting and automated ordering system mock." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
