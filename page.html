@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>業務フロー図（全体版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: #fff;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      border: 1px solid #0277bd;
+      background-color: #fff;
+      color: #0277bd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background-color: #0277bd;
+      color: #fff;
+    }
+
+    .legend {
+      font-size: 0.8rem;
+      color: #666;
+      margin-left: 20px;
+    }
+
+    #diagram-wrapper {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background-color: #fff;
+      position: relative;
+    }
+
+    .diagram-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
+    .diagram-container.active {
+      opacity: 1;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    
+    .mermaid {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div style="display:flex; align-items:center;">
+      <h1>AI需要予測・発注最適化システム 業務フロー図</h1>
+      <span class="legend">（マウスホイールで拡大縮小 / ドラッグで移動）</span>
+    </div>
+    <div class="controls">
+      <button class="tab-btn active" onclick="switchTab('asis')">現状 (AS-IS)</button>
+      <button class="tab-btn" onclick="switchTab('tobe')">新業務 (TO-BE)</button>
+    </div>
+  </header>
+
+  <div id="diagram-wrapper">
+    
+    <!-- AS-IS Diagram -->
+    <div id="asis" class="diagram-container active">
+      <pre class="mermaid">
+        flowchart LR
+          %% クラス定義
+          classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+          classDef nishiki fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+          classDef system fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
+          classDef factory fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+          classDef warning fill:#ffccbc,stroke:#d84315,stroke-width:2px,stroke-dasharray: 5 5,color:#b71c1c
+
+          %% --- レーン定義 ---
+          
+          subgraph Lane_Client_Old [得意先]
+              direction LR
+              Order_Old(["注文<br/>(方法確認要)"])
+          end
+
+          subgraph Lane_Sales_Old [錦産業：受注・出荷]
+              direction LR
+              Check_Stock{"在庫あり?"}
+              Picking_Old[出荷処理]
+              Shortage_Old(欠品・機会損失)
+          end
+
+          subgraph Lane_ASPAC_Old [基幹システム：ASPAC]
+              direction LR
+              ASPAC_DB_Old[(ASPAC DB)]
+              Arrival_Op_Old[入荷検品]
+          end
+
+          subgraph Lane_Planner_Old [錦産業：発注担当]
+              direction LR
+              Excel_DL[CSVデータ抽出]
+              Excel_Work["Excel集計・加工<br/>(属人化・経験と勘)"]
+              Calc_Manual["コンテナ手計算<br/>(パズル業務)"]
+              Make_Doc[発注書作成]
+              Mail_Send["発注実行<br/>(方法確認要)"]
+          end
+
+          subgraph Lane_Factory_Old [海外工場]
+              direction LR
+              Factory_Mfg_Old[製造]
+              Transport_Old["輸送<br/>(45-60日)"]
+          end
+
+          %% --- フロー接続 ---
+          Order_Old --> Check_Stock
+          Check_Stock -- YES --> Picking_Old
+          Picking_Old --> ASPAC_DB_Old
+          
+          Check_Stock -- NO --> Shortage_Old
+          Shortage_Old -.-> Excel_Work
+
+          ASPAC_DB_Old -.->|手動DL| Excel_DL
+          Excel_DL --> Excel_Work
+          Excel_Work --> Calc_Manual
+          Calc_Manual --> Make_Doc
+          Make_Doc --> Mail_Send
+
+          Mail_Send --> Factory_Mfg_Old
+          Factory_Mfg_Old --> Transport_Old
+          Transport_Old --> Arrival_Op_Old
+          Arrival_Op_Old --> ASPAC_DB_Old
+
+          %% --- クラス適用 ---
+          class Order_Old client
+          class Check_Stock,Picking_Old nishiki
+          class Excel_DL,Excel_Work,Calc_Manual,Make_Doc,Mail_Send nishiki
+          class ASPAC_DB_Old,Arrival_Op_Old system
+          class Factory_Mfg_Old,Transport_Old factory
+          class Shortage_Old warning
+      </pre>
+    </div>
+
+    <!-- TO-BE Diagram (修正版) -->
+    <div id="tobe" class="diagram-container">
+      <pre class="mermaid">
+        flowchart LR
+          %% クラス定義
+          classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+          classDef nishiki fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+          classDef system fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
+          classDef ai fill:#e8eaf6,stroke:#304ffe,stroke-width:2px,color:#000
+          classDef factory fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+          classDef note fill:#fff3e0,stroke:#ff9800,stroke-dasharray: 5 5,color:#000
+
+          subgraph Lane_Client [得意先]
+              direction LR
+              POS_Data[POS・在庫データ提供]
+              %% 追加: 受注の前の注文
+              Client_Order(["注文"])
+          end
+
+          subgraph Lane_Sales [錦産業：受注・出荷]
+              direction LR
+              Sales_Order([受注入力])
+              Shipping_Exec[出荷処理]
+          end
+
+          subgraph Lane_ASPAC [基幹システム：ASPAC]
+              direction LR
+              ASPAC_DB[(ASPAC DB)]
+              %% 修正: 取消→消込
+              Arrival_Op[入荷検品・消込]
+              Sync_Data["APIデータ連携<br/>(在庫/入出荷/マスタ/廃盤)"]
+          end
+
+          subgraph Lane_AI [新システム：AI需要予測・自動発注]
+              direction LR
+              Import_POS[外部データ取込]
+              AI_Predict["需要予測<br/>トレンド/季節/販促"]
+              AI_Simulate[未来在庫シミュレーション]
+              AI_Logic{"発注判定<br/>(安全在庫割れ?)"}
+              AI_Build["コンテナ充填計算<br/>MOQ/CBM最適化"]
+              AI_Draft[発注案 自動生成]
+              
+              Note_Reverse["【逆算ロジック】<br/>リードタイム(45-60日)を逆算し<br/>欠品発生前に着荷するよう警告"]
+          end
+
+          subgraph Lane_Planner [錦産業：発注担当]
+              direction LR
+              Human_Check[AI提案のレビュー]
+              Human_Approve[最終承認]
+              Human_Order[発注書 送付]
+          end
+
+          subgraph Lane_Factory [海外工場・物流]
+              direction LR
+              Factory_Mfg[製造]
+              Logistics_Ship["海上輸送<br/>(45-60日)"]
+              Logistics_Arrive[国内到着]
+          end
+
+          %% --- フロー接続 ---
+
+          %% 追加接続: 注文→受注
+          Client_Order --> Sales_Order
+          POS_Data -.-> Import_POS
+          
+          Sales_Order --> ASPAC_DB
+          Shipping_Exec --> ASPAC_DB
+          
+          ASPAC_DB <==> Sync_Data
+          Sync_Data ==> AI_Predict
+          Sync_Data -.->|在庫反映| AI_Simulate
+
+          Import_POS --> AI_Predict
+          AI_Predict --> AI_Simulate
+          AI_Simulate --> AI_Logic
+          Note_Reverse -.-> AI_Logic
+
+          AI_Logic -- 問題なし --> AI_Simulate
+          AI_Logic -- "要発注(アラート)" --> AI_Build
+          AI_Build --> AI_Draft
+
+          AI_Draft --> Human_Check
+          Human_Check --> Human_Approve
+          Human_Approve --> Human_Order
+
+          Human_Order ==> Factory_Mfg
+          Factory_Mfg ==> Logistics_Ship
+          Logistics_Ship ==> Logistics_Arrive
+          
+          Logistics_Arrive ==> Arrival_Op
+          Arrival_Op --> ASPAC_DB
+          %% 修正: ラベル変更
+          Arrival_Op -.->|消込/訂正| ASPAC_DB
+
+          class POS_Data,Client_Order client
+          class Sales_Order,Shipping_Exec nishiki
+          class Human_Check,Human_Approve,Human_Order nishiki
+          class ASPAC_DB,Sync_Data,Arrival_Op system
+          class Import_POS,AI_Predict,AI_Simulate,AI_Logic,AI_Build,AI_Draft ai
+          class Factory_Mfg,Logistics_Ship,Logistics_Arrive factory
+          class Note_Reverse note
+      </pre>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  
+  <script>
+    const config = {
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#e3f2fd',
+        edgeLabelBackground: '#fff',
+        clusterBkg: '#fafafa',
+        clusterBorder: '#ccc',
+        fontFamily: '"Helvetica Neue", Arial, sans-serif'
+      },
+      flowchart: {
+        useMaxWidth: false,
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    };
+
+    let panZoomInstances = {};
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      mermaid.initialize(config);
+      try {
+        await mermaid.run({
+            nodes: document.querySelectorAll('.mermaid'),
+        });
+        
+        document.querySelectorAll('.diagram-container').forEach(container => {
+            const id = container.id;
+            const svgElement = container.querySelector('svg');
+            
+            if (svgElement) {
+                svgElement.style.width = '100%';
+                svgElement.style.height = '100%';
+                
+                panZoomInstances[id] = svgPanZoom(svgElement, {
+                    zoomEnabled: true,
+                    controlIconsEnabled: true,
+                    fit: true,
+                    center: true,
+                    minZoom: 0.1,
+                    maxZoom: 10
+                });
+            }
+        });
+
+      } catch (e) {
+        console.error('Mermaid rendering failed:', e);
+      }
+    });
+
+    window.switchTab = function(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('onclick').includes(tabId)) {
+                btn.classList.add('active');
+            }
+        });
+
+        document.querySelectorAll('.diagram-container').forEach(container => {
+            container.classList.remove('active');
+            if (container.id === tabId) {
+                container.classList.add('active');
+                
+                if (panZoomInstances[tabId]) {
+                    panZoomInstances[tabId].resize();
+                    panZoomInstances[tabId].fit();
+                    panZoomInstances[tabId].center();
+                }
+            }
+        });
+    };
+  </script>
+</body>
+</html>
